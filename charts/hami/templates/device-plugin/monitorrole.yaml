@@ -24,6 +24,7 @@ rules:
       - update
       - list
       - patch
+      - watch
 {{- end -}}
     
     

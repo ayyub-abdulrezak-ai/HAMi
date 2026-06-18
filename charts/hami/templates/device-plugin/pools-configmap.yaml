@@ -1,0 +1,15 @@
+{{- if and .Values.devicePlugin.enabled .Values.devicePlugin.configManager.enabled (not .Values.dra.enabled) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hami-vgpu.device-plugin" . }}-pools
+  namespace: {{ include "hami-vgpu.namespace" . }}
+  labels:
+    app.kubernetes.io/component: hami-device-plugin
+    {{- include "hami-vgpu.labels" . | nindent 4 }}
+data:
+{{- range $name, $patch := .Values.devicePlugin.configManager.pools }}
+  {{ $name }}: |-
+    {{ $patch | trim | nindent 4 }}
+{{- end }}
+{{- end }}

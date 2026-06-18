@@ -40,11 +40,12 @@ spec:
       {{- end }}
       serviceAccountName: {{ include "hami-vgpu.device-plugin" . }}
       priorityClassName: system-node-critical
-      hostPID: true
       hostNetwork: false
+      shareProcessNamespace: true
       {{- include "hami.devicePlugin.imagePullSecrets" . | nindent 6 }}
-      {{- if .Values.devicePlugin.gpuOperatorToolkitReady.enabled }}
+      {{- if or .Values.devicePlugin.gpuOperatorToolkitReady.enabled .Values.devicePlugin.configManager.enabled }}
       initContainers:
+        {{- if .Values.devicePlugin.gpuOperatorToolkitReady.enabled }}
         - name: toolkit-validation
           image: {{ include "hami.devicePlugin.image" . }}
           imagePullPolicy: {{ .Values.devicePlugin.image.pullPolicy }}
@@ -55,7 +56,7 @@ spec:
           args:
             - |
               echo "Waiting for NVIDIA Toolkit to be ready..."
-              until [ -f {{ .Values.devicePlugin.gpuOperatorToolkitReady.hostPath }}/toolkit-ready ]; do 
+              until [ -f {{ .Values.devicePlugin.gpuOperatorToolkitReady.hostPath }}/toolkit-ready ]; do
                 echo "Waiting for {{ .Values.devicePlugin.gpuOperatorToolkitReady.hostPath }}/toolkit-ready..."
                 sleep 5
               done
@@ -65,6 +66,37 @@ spec:
               mountPath: {{ .Values.devicePlugin.gpuOperatorToolkitReady.hostPath | quote }}
               mountPropagation: HostToContainer
               readOnly: true
+        {{- end }}
+        {{- if .Values.devicePlugin.configManager.enabled }}
+        - name: config-manager-init
+          image: {{ include "hami.devicePlugin.image" . }}
+          imagePullPolicy: {{ .Values.devicePlugin.image.pullPolicy }}
+          command: ["config-manager"]
+          env:
+            - name: ONESHOT
+              value: "true"
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: NODE_LABEL
+              value: {{ .Values.devicePlugin.configManager.nodeLabel | quote }}
+            - name: BASE_CONFIG_FILE
+              value: /base-config/device-config.yaml
+            - name: POOLS_SRCDIR
+              value: /available-pools
+            - name: CONFIG_FILE_DST
+              value: /merged-config/device-config.yaml
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: device-config
+              mountPath: /base-config
+            - name: available-pools
+              mountPath: /available-pools
+            - name: merged-config
+              mountPath: /merged-config
+        {{- end }}
       {{- end }}
       containers:
         - name: device-plugin
@@ -76,7 +108,7 @@ spec:
                 command: ["/bin/sh","-c", {{ printf "/k8s-vgpu/bin/vgpu-init.sh %s/vgpu/" .Values.global.gpuHookPath | quote }}]
           command:
             - nvidia-device-plugin
-            - --config-file=/device-config.yaml
+            - --config-file={{ if .Values.devicePlugin.configManager.enabled }}/merged-config/device-config.yaml{{ else }}/device-config.yaml{{ end }}
             - --mig-strategy={{ .Values.devicePlugin.migStrategy }}
             - --disable-core-limit={{ .Values.devicePlugin.disablecorelimit }}
             {{- range .Values.devicePlugin.extraArgs }}
@@ -159,6 +191,38 @@ spec:
               mountPath: /driver-root
               readOnly: true
             {{- end }}
+            {{- if .Values.devicePlugin.configManager.enabled }}
+            - name: merged-config
+              mountPath: /merged-config
+            {{- end }}
+        {{- if .Values.devicePlugin.configManager.enabled }}
+        - name: config-manager
+          image: {{ include "hami.devicePlugin.image" . }}
+          imagePullPolicy: {{ .Values.devicePlugin.image.pullPolicy }}
+          command: ["config-manager"]
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: NODE_LABEL
+              value: {{ .Values.devicePlugin.configManager.nodeLabel | quote }}
+            - name: BASE_CONFIG_FILE
+              value: /base-config/device-config.yaml
+            - name: POOLS_SRCDIR
+              value: /available-pools
+            - name: CONFIG_FILE_DST
+              value: /merged-config/device-config.yaml
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: device-config
+              mountPath: /base-config
+            - name: available-pools
+              mountPath: /available-pools
+            - name: merged-config
+              mountPath: /merged-config
+        {{- end }}
         - name: vgpu-monitor
           image: {{ include "hami.devicePlugin.monitor.image" . }}
           imagePullPolicy: {{ .Values.devicePlugin.monitor.image.pullPolicy }}
@@ -256,6 +320,13 @@ spec:
         - name: device-config
           configMap:
             name: {{ include "hami-vgpu.scheduler" . }}-device
+        {{- if .Values.devicePlugin.configManager.enabled }}
+        - name: available-pools
+          configMap:
+            name: {{ include "hami-vgpu.device-plugin" . }}-pools
+        - name: merged-config
+          emptyDir: {}
+        {{- end }}
       {{- if .Values.devicePlugin.nvidiaNodeSelector }}
       nodeSelector: {{ toYaml .Values.devicePlugin.nvidiaNodeSelector | nindent 8 }}
       {{- end }}
