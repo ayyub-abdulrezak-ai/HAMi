@@ -367,6 +367,27 @@ devicePlugin:
   runtimeClassName: ""
   # Whether to create runtime class, name comes from runtimeClassName when it is set
   createRuntimeClass: false
+  # configManager enables hot-reload of the device plugin config via a sidecar
+  # that watches a node label and merges pool-specific patches onto the base config.
+  # When a node is relabeled, the sidecar rewrites the merged config and sends SIGHUP
+  # to nvidia-device-plugin — no pod restart required.
+  configManager:
+    enabled: false
+    # nodeLabel is the node label key whose value selects the active pool patch.
+    nodeLabel: "hami.io/device-plugin.config"
+    # pools is a map of pool name -> YAML patch applied on top of the base device-config.
+    # Only fields present in the patch are overridden; everything else is inherited from
+    # the base config (MIG geometries, resource names, etc.).
+    pools: {}
+    # Example:
+    # pools:
+    #   pool-2: |
+    #     nvidia:
+    #       deviceSplitCount: 2
+    #   pool-4: |
+    #     nvidia:
+    #       deviceSplitCount: 4
+
   migStrategy: "none"
   disablecorelimit: "false"
   passDeviceSpecsEnabled: false
