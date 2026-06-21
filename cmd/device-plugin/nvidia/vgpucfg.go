@@ -63,6 +63,12 @@ func addFlags() []cli.Flag {
 			Usage:   "If set, the core utilization limit will be ignored",
 			EnvVars: []string{"DISABLE_CORE_LIMIT"},
 		},
+		&cli.BoolFlag{
+			Name:    "time-based-throttle",
+			Value:   false,
+			Usage:   "If set, use CUDA event timing for GPU compute throttling instead of NVML feedback",
+			EnvVars: []string{"TIME_BASED_THROTTLE"},
+		},
 		&cli.StringFlag{
 			Name:  "resource-name",
 			Value: "nvidia.com/gpu",

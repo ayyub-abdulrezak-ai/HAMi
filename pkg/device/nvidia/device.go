@@ -117,7 +117,8 @@ type NvidiaConfig struct {
 	DisableCoreLimit  bool                          `yaml:"disableCoreLimit"`
 	MigGeometriesList []device.AllowedMigGeometries `yaml:"knownMigGeometries"`
 	// GPUCorePolicy through webhook automatic injected to container env
-	GPUCorePolicy GPUCoreUtilizationPolicy `yaml:"gpuCorePolicy"`
+	GPUCorePolicy      GPUCoreUtilizationPolicy `yaml:"gpuCorePolicy"`
+	TimeBasedThrottle  bool                     `yaml:"timeBasedThrottle"`
 	// RuntimeClassName is the name of the runtime class to be added to pod.spec.runtimeClassName
 	RuntimeClassName string `yaml:"runtimeClassName"`
 }
