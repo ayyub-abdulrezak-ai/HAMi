@@ -29,6 +29,7 @@ data:
       deviceCoreScaling: {{ .Values.devicePlugin.deviceCoreScaling }}
       gpuCorePolicy: {{ .Values.devices.nvidia.gpuCorePolicy }}
       libCudaLogLevel: {{ .Values.devices.nvidia.libCudaLogLevel }}
+      timeBasedThrottle: {{ .Values.devices.nvidia.experimentalTimeBasedThrottle }}
       runtimeClassName: "{{ .Values.devicePlugin.runtimeClassName }}"
       knownMigGeometries:
       - models: [ "A30" ]
