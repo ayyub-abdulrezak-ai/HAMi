@@ -672,9 +672,7 @@ func (plugin *NvidiaDevicePlugin) Allocate(ctx context.Context, reqs *kubeletdev
 				if plugin.schedulerConfig.DisableCoreLimit {
 					response.Envs[util.CoreLimitSwitch] = "disable"
 				}
-				if plugin.schedulerConfig.TimeBasedThrottle {
-					response.Envs["TIME_BASED_THROTTLE"] = "true"
-				}
+
 				cacheFileHostDirectory := fmt.Sprintf("%s/vgpu/containers/%s_%s", hostHookPath, current.UID, currentCtr.Name)
 				os.RemoveAll(cacheFileHostDirectory)
 

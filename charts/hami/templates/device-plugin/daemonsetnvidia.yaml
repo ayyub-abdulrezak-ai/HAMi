@@ -111,7 +111,6 @@ spec:
             - --config-file={{ if .Values.devicePlugin.configManager.enabled }}/merged-config/device-config.yaml{{ else }}/device-config.yaml{{ end }}
             - --mig-strategy={{ .Values.devicePlugin.migStrategy }}
             - --disable-core-limit={{ .Values.devicePlugin.disablecorelimit }}
-            - --time-based-throttle={{ .Values.devicePlugin.nvidia.experimentalTimeBasedThrottle }}
             {{- range .Values.devicePlugin.extraArgs }}
             - {{ . }}
             {{- end }}

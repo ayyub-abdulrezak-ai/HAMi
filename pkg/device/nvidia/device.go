@@ -361,6 +361,13 @@ func (dev *NvidiaGPUDevices) MutateAdmission(ctr *corev1.Container, p *corev1.Po
 		})
 	}
 
+	if dev.config.TimeBasedThrottle {
+		ctr.Env = append(ctr.Env, corev1.EnvVar{
+			Name:  "TIME_BASED_THROTTLE",
+			Value: "true",
+		})
+	}
+
 	hasResource := dev.mutateContainerResource(ctr)
 	if dev.defaultExclusiveCoreIfNeeded(ctr) {
 		hasResource = true
