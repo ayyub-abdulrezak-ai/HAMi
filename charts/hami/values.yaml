@@ -502,7 +502,7 @@ devices:
   nvidia:
     gpuCorePolicy: default
     libCudaLogLevel: 1
-    experimentalTimeBasedThrottle: false
+    experimentalThrottle: false
   ascend:
     enabled: false
     image: ""

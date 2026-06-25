@@ -118,7 +118,7 @@ type NvidiaConfig struct {
 	MigGeometriesList []device.AllowedMigGeometries `yaml:"knownMigGeometries"`
 	// GPUCorePolicy through webhook automatic injected to container env
 	GPUCorePolicy      GPUCoreUtilizationPolicy `yaml:"gpuCorePolicy"`
-	TimeBasedThrottle  bool                     `yaml:"timeBasedThrottle"`
+	ExperimentalThrottle bool `yaml:"experimentalThrottle"`
 	// RuntimeClassName is the name of the runtime class to be added to pod.spec.runtimeClassName
 	RuntimeClassName string `yaml:"runtimeClassName"`
 }
@@ -361,9 +361,13 @@ func (dev *NvidiaGPUDevices) MutateAdmission(ctr *corev1.Container, p *corev1.Po
 		})
 	}
 
-	if dev.config.TimeBasedThrottle {
+	if dev.config.ExperimentalThrottle {
 		ctr.Env = append(ctr.Env, corev1.EnvVar{
-			Name:  "TIME_BASED_THROTTLE",
+			Name:  util.CoreLimitSwitch,
+			Value: "FORCE",
+		})
+		ctr.Env = append(ctr.Env, corev1.EnvVar{
+			Name:  "EXPERIMENTAL_THROTTLER",
 			Value: "true",
 		})
 	}
